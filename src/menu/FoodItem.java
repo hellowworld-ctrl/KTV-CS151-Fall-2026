@@ -58,8 +58,9 @@ public class FoodItem extends MenuItem {
         if (name == null) {
             return null;
         }
+        String cleaned = name.trim();
         for (int i = 0; i < allFood.size(); i++) {
-            if (allFood.get(i).getName().equalsIgnoreCase(name)) {
+            if (allFood.get(i).getName().equalsIgnoreCase(cleaned)) {
                 return allFood.get(i);
             }
         }
@@ -71,13 +72,18 @@ public class FoodItem extends MenuItem {
     }
 
     public static boolean removeFood(String name) {
+        if (name == null) {
+            System.out.println("could not find that item on the food menu");
+            return false;
+        }
+        String cleaned = name.trim();
         for (int i = 0; i < allFood.size(); i++) {
-            if (allFood.get(i).getName().equalsIgnoreCase(name)) {
+            if (allFood.get(i).getName().equalsIgnoreCase(cleaned)) {
                 allFood.remove(i);
                 return true;
             }
         }
-        System.out.println("could not find " + name + " on the food menu");
+        System.out.println("could not find " + cleaned + " on the food menu");
         return false;
     }
 
@@ -129,6 +135,53 @@ public class FoodItem extends MenuItem {
         setPrice(getPrice() + (2 * extraPeople));
     }
 
+    // one step hotter, and the plate costs a dollar more
+    public void makeSpicier() {
+        if (spiceLevel < 0) {
+            System.out.println("spice is not set yet");
+            return;
+        }
+        if (spiceLevel >= 3) {
+            System.out.println(getName() + " is already as spicy as it gets");
+            return;
+        }
+        spiceLevel = spiceLevel + 1;
+        setPrice(getPrice() + 1);
+    }
+
+    // figures out how many plates the table needs
+    // 2 or more plates is 10 percent off, and 6 or more uses the normal bulk deal
+    public double orderForGroup(int people) {
+        if (people < 1) {
+            System.out.println("people has to be at least 1");
+            return -1;
+        }
+        if (servings < 1) {
+            System.out.println(getName() + " does not have a serving size");
+            return -1;
+        }
+        int plates = people / servings;
+        if (people % servings != 0) {
+            plates = plates + 1;
+        }
+        if (getStock() < plates) {
+            System.out.println("not enough " + getName() + " for " + people + " people");
+            return -1;
+        }
+        double total = quote(plates);
+        String deal = discountNote(plates);
+        if (plates >= 2 && plates < 6) {
+            total = Math.round(getPrice() * plates * 0.90 * 100.0) / 100.0;
+            deal = "group deal, 10% off";
+        }
+        if (!order(plates)) {
+            return -1;
+        }
+        System.out.println(plates + " plate(s) of " + getName() + " for " + people
+                + " people (" + deal + ") for $" + String.format("%.2f", total));
+        return total;
+    }
+
     @Override
     public String describeItem() {
         return "serves " + servings + ", spice " + spiceLevel;
@@ -156,5 +209,25 @@ public class FoodItem extends MenuItem {
         for (int i = 0; i < menu.size(); i++) {
             System.out.println(menu.get(i).toString());
         }
+
+        System.out.println();
+        System.out.println("sample orders");
+        Beverage tsingtao = Beverage.findDrink("Tsingtao");
+        tsingtao.buy(6, true);
+        tsingtao.buyBucket(true);
+        tsingtao.buy(1, false);
+
+        FoodItem fries = findFood("French Fries");
+        fries.orderForGroup(7);
+        fries.makeSpicier();
+        System.out.println(fries);
+
+        Beverage tea = Beverage.findDrink("Jasmine Tea");
+        tea.refill(true);
+
+        tsingtao.applyHappyHour();
+        System.out.println(tsingtao);
+        tsingtao.endHappyHour();
+        System.out.println(tsingtao);
     }
 }

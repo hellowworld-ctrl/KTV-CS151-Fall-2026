@@ -11,6 +11,7 @@ public class Beverage extends MenuItem {
     private boolean alcoholic;
     private String ice;
     private boolean happyHour;
+    private double priceBeforeHappyHour;
 
     public Beverage(String name, double price, int stock, String size,
             boolean alcoholic, String ice) {
@@ -19,6 +20,7 @@ public class Beverage extends MenuItem {
         this.ice = "";
         this.alcoholic = alcoholic;
         this.happyHour = false;
+        this.priceBeforeHappyHour = getPrice();
 
         if (getName().equals("") || price < 0 || stock < 0) {
             return;
@@ -65,8 +67,9 @@ public class Beverage extends MenuItem {
         if (name == null) {
             return null;
         }
+        String cleaned = name.trim();
         for (int i = 0; i < allDrinks.size(); i++) {
-            if (allDrinks.get(i).getName().equalsIgnoreCase(name)) {
+            if (allDrinks.get(i).getName().equalsIgnoreCase(cleaned)) {
                 return allDrinks.get(i);
             }
         }
@@ -78,13 +81,18 @@ public class Beverage extends MenuItem {
     }
 
     public static boolean removeDrink(String name) {
+        if (name == null) {
+            System.out.println("could not find that drink on the drink menu");
+            return false;
+        }
+        String cleaned = name.trim();
         for (int i = 0; i < allDrinks.size(); i++) {
-            if (allDrinks.get(i).getName().equalsIgnoreCase(name)) {
+            if (allDrinks.get(i).getName().equalsIgnoreCase(cleaned)) {
                 allDrinks.remove(i);
                 return true;
             }
         }
-        System.out.println("could not find " + name + " on the drink menu");
+        System.out.println("could not find " + cleaned + " on the drink menu");
         return false;
     }
 
@@ -140,7 +148,7 @@ public class Beverage extends MenuItem {
         setIce(ice);
     }
 
-    // 20 percent off alcohol, only once
+    // 20 percent off alcohol, only once. bulk deals still use this price
     public void applyHappyHour() {
         if (!alcoholic) {
             System.out.println(getName() + " is not an alcoholic drink");
@@ -150,12 +158,26 @@ public class Beverage extends MenuItem {
             System.out.println(getName() + " is already on happy hour");
             return;
         }
-        setPrice(getPrice() * 0.8);
+        priceBeforeHappyHour = getPrice();
+        setPrice(priceBeforeHappyHour * 0.8);
         happyHour = true;
+    }
+
+    public void endHappyHour() {
+        if (!happyHour) {
+            System.out.println(getName() + " is not on happy hour");
+            return;
+        }
+        setPrice(priceBeforeHappyHour);
+        happyHour = false;
     }
 
     // can becomes a bottle, a glass or cup becomes a pitcher
     public void upsize() {
+        if (happyHour) {
+            System.out.println("end happy hour before changing the size of " + getName());
+            return;
+        }
         if (size.equals("can")) {
             size = "bottle";
             setPrice(getPrice() * 1.5);
@@ -169,13 +191,57 @@ public class Beverage extends MenuItem {
         System.out.println(getName() + " is already a " + size);
     }
 
+    // bucket is 6 cans or bottles and the room pays for 5
+    // separate from the 10 percent bulk deal, so they do not stack
+    public double buyBucket(boolean hasId) {
+        if (!size.equals("can") && !size.equals("bottle")) {
+            System.out.println(getName() + " does not come in a bucket");
+            return -1;
+        }
+        if (!canServe(hasId)) {
+            return -1;
+        }
+        if (getStock() < 6) {
+            System.out.println("not enough " + getName() + " for a bucket");
+            return -1;
+        }
+        double total = Math.round(getPrice() * 5 * 100.0) / 100.0;
+        if (!order(6)) {
+            return -1;
+        }
+        System.out.println("bucket of 6 " + getName() + " (pay for 5) for $"
+                + String.format("%.2f", total));
+        return total;
+    }
+
+    // tea, a cup, or a pitcher can be refilled for half the current price
+    public double refill(boolean hasId) {
+        if (!size.equals("cup") && !size.equals("pitcher") && !size.equals("pot")) {
+            System.out.println(getName() + " cannot be refilled");
+            return -1;
+        }
+        if (!canServe(hasId)) {
+            return -1;
+        }
+        double total = Math.round(getPrice() * 0.5 * 100.0) / 100.0;
+        if (!order(1)) {
+            return -1;
+        }
+        System.out.println("refilled " + getName() + " for $" + String.format("%.2f", total));
+        return total;
+    }
+
     @Override
     public String describeItem() {
         String kind = "non-alcoholic";
         if (alcoholic) {
             kind = "alcoholic";
         }
-        return size + ", " + kind + ", ice: " + ice;
+        String special = "";
+        if (happyHour) {
+            special = ", happy hour";
+        }
+        return size + ", " + kind + ", ice: " + ice + special;
     }
 
     @Override
