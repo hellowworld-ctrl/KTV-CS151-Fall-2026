@@ -80,7 +80,7 @@ public abstract class MenuItem {
         return true;
     }
 
-    // takes some off the shelf if there is enough
+    // only updates stock. buy() is what a room actually pays
     public boolean order(int amount) {
         if (amount <= 0) {
             System.out.println("order amount has to be at least 1");
@@ -95,6 +95,54 @@ public abstract class MenuItem {
             available = false;
         }
         return true;
+    }
+
+    // 6 or more is 10 percent off, 12 or more is 20 percent off
+    // does not change the menu price, happy hour is already in the price
+    public double quote(int amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        double total = price * amount;
+        if (amount >= 12) {
+            total = total * 0.80;
+        } else if (amount >= 6) {
+            total = total * 0.90;
+        }
+        return Math.round(total * 100.0) / 100.0;
+    }
+
+    public String discountNote(int amount) {
+        if (amount >= 12) {
+            return "case deal, 20% off";
+        }
+        if (amount >= 6) {
+            return "bulk deal, 10% off";
+        }
+        return "regular price";
+    }
+
+    // checks the id and the stock first, then takes them off the shelf
+    // returns what they were charged, or -1 if it did not go through
+    public double buy(int amount, boolean hasId) {
+        if (amount <= 0) {
+            System.out.println("order amount has to be at least 1");
+            return -1;
+        }
+        if (!canServe(hasId)) {
+            return -1;
+        }
+        if (stock < amount) {
+            System.out.println("not enough " + name + " left");
+            return -1;
+        }
+        double total = quote(amount);
+        if (!order(amount)) {
+            return -1;
+        }
+        System.out.println("ordered " + amount + " " + name + " (" + discountNote(amount)
+                + ") for $" + String.format("%.2f", total));
+        return total;
     }
 
     public void restock(int amount) {
