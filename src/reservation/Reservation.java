@@ -73,4 +73,80 @@ public class Reservation {
         }
         this.hours = hours;
     }
+
+    public boolean confirmReservation() {
+        if (room == null) {
+            System.out.println("reservation needs a room");
+            return false;
+        }
+        
+        if (active) {
+            System.out.println("reservation is already active");
+            return false;
+        }
+
+        if (!room.canFit(numberOfGuests)) {
+            System.out.println("too many guests for this room");
+            return false;
+        }
+
+        if (!room.isAvailable()) {
+            System.out.println("room is not available");
+            return false;
+        }
+
+        if (!room.checkIn()) {
+            return false;
+        }
+
+        active = true;
+        return true;
+    }
+
+    public boolean cancelReservation() {
+        if (!active) {
+            System.out.println("reservation is not active");
+            return false;
+        }
+
+        room.checkOut();
+        active = false;
+        return true;
+    }
+
+    public boolean extendReservation(int additionalHours) {
+        if (!active) {
+            System.out.println("reservation is not active");
+            return false;
+        }
+
+        if (additionalHours <= 0) {
+            System.out.println("additional hours has to be at least 1");
+            return false;
+        }
+
+        hours = hours + additionalHours;
+        return true;
+    }
+
+    public double calculateTotal() {
+        return room.calculateCost(hours);
+    }
+
+    @Override
+    public String toString() {
+        String status = "inactive";
+
+        if (active) {
+            status = "active";
+        }
+
+        return "Reservation " + reservationId
+                + " for " + customerName
+                + ", Room " + room.getRoomId()
+                + ", " + numberOfGuests + " guests"
+                + ", " + hours + " hours"
+                + ", " + status;
+    }
+
 }
