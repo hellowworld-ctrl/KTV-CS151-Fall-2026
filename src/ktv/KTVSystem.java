@@ -45,6 +45,9 @@ public class KTVSystem {
             System.out.println("room cannot be empty");
             return false;
         }
+        if (room.getCapacity() < 1 || room.getHourlyRate() < 0) {
+            return false;
+        }
         if (findRoom(room.getRoomId()) != null) {
             System.out.println("that room already exists");
             return false;
@@ -84,6 +87,20 @@ public class KTVSystem {
         }
         reservations.add(booking);
         return booking;
+    }
+
+    // cancels a booking and takes it off the list
+    public boolean cancelReservation(Customer customer) {
+        if (customer == null || customer.getReservation() == null) {
+            System.out.println("no reservation");
+            return false;
+        }
+        Reservation booking = customer.getReservation();
+        if (!customer.cancelBooking()) {
+            return false;
+        }
+        reservations.remove(booking);
+        return true;
     }
 
     // finds a room by id

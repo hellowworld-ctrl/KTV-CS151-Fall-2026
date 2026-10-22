@@ -7,6 +7,7 @@ import customer.Customer;
 import ktv.KTVSystem;
 import menu.Beverage;
 import menu.FoodItem;
+import reservation.Reservation;
 import reservation.Room;
 
 // text menu for the ktv
@@ -81,6 +82,16 @@ public class KtvMenu {
         }
     }
 
+    private static double askDouble(String prompt) {
+        while (true) {
+            try {
+                return Double.parseDouble(ask(prompt));
+            } catch (NumberFormatException e) {
+                System.out.println("enter a number");
+            }
+        }
+    }
+
     // keeps asking until the number is in range
     private static int readChoice(int min, int max) {
         while (true) {
@@ -92,7 +103,7 @@ public class KtvMenu {
                 }
             } catch (NumberFormatException e) {
                 // not a number, ask again
-            }1
+            }
             System.out.println("enter a number from " + min + " to " + max);
         }
     }
@@ -116,14 +127,36 @@ public class KtvMenu {
                 } else {
                     System.out.println(customer);
                 }
+            } else if (choice == 4) {
+                Customer customer = ktv.findCustomer(ask("Customer name: "));
+                if (customer == null) {
+                    System.out.println("could not find that customer");
+                } else if (customer.showId()) {
+                    System.out.println("id checked");
+                }
             } else if (choice == 5) {
-                ktv.makeReservation(ktv.findCustomer(ask("Customer name: ")),
+                Reservation booking = ktv.makeReservation(ktv.findCustomer(ask("Customer name: ")),
                         ktv.findRoom(askInt("Room id: ")),
                         askInt("Guests: "), askInt("Hours: "));
-            } else if (choice == choices.length + 1) {
-                back = true;
+                if (booking != null) {
+                    System.out.println(booking);
+                }
+            } else if (choice == 6) {
+                Customer customer = ktv.findCustomer(ask("Customer name: "));
+                if (customer == null) {
+                    System.out.println("could not find that customer");
+                } else {
+                    customer.orderDrink(Beverage.findDrink(ask("Drink: ")), askInt("How many: "));
+                }
+            } else if (choice == 7) {
+                Customer customer = ktv.findCustomer(ask("Customer name: "));
+                if (customer == null) {
+                    System.out.println("could not find that customer");
+                } else if (customer.pay(askDouble("Amount: ")) > 0) {
+                    System.out.println(customer);
+                }
             } else {
-                System.out.println("not filled in yet");
+                back = true;
             }
         }
     }
@@ -140,7 +173,15 @@ public class KtvMenu {
             } else if (choice == choices.length + 1) {
                 back = true;
             } else {
-                System.out.println("not filled in yet");
+                FoodItem food = FoodItem.findFood(ask("Food: "));
+                if (food == null) {
+                    System.out.println("could not find that food");
+                } else if (choice == 2) {
+                    food.orderForGroup(askInt("People: "));
+                } else {
+                    food.makeSpicier();
+                    System.out.println(food);
+                }
             }
         }
     }
@@ -158,7 +199,18 @@ public class KtvMenu {
             } else if (choice == choices.length + 1) {
                 back = true;
             } else {
-                System.out.println("not filled in yet");
+                Beverage drink = Beverage.findDrink(ask("Drink: "));
+                if (drink == null) {
+                    System.out.println("could not find that drink");
+                } else if (choice == 2) {
+                    drink.buy(askInt("How many: "),
+                            ask("Shown an id (yes/no): ").equalsIgnoreCase("yes"));
+                } else if (choice == 3) {
+                    drink.buyBucket(ask("Shown an id (yes/no): ").equalsIgnoreCase("yes"));
+                } else {
+                    drink.applyHappyHour();
+                    System.out.println(drink);
+                }
             }
         }
     }
@@ -180,7 +232,8 @@ public class KtvMenu {
                 if (room == null) {
                     System.out.println("could not find that room");
                 } else {
-                    System.out.println("$" + room.calculateCost(askInt("Hours: ")));
+                    System.out.println("$" + String.format("%.2f",
+                            room.calculateCost(askInt("Hours: "))));
                 }
             } else {
                 back = true;
@@ -199,14 +252,17 @@ public class KtvMenu {
                 back = true;
             } else {
                 Customer customer = ktv.findCustomer(ask("Customer name: "));
-                if (customer == null || customer.getReservation() == null) {
+                if (customer == null || customer.getReservation() == null
+                        || !customer.getReservation().isActive()) {
                     System.out.println("no reservation");
                 } else if (choice == 1) {
                     System.out.println(customer.getReservation());
                 } else if (choice == 2) {
-                    customer.extendStay(askInt("Extra hours: "));
-                } else {
-                    customer.cancelBooking();
+                    if (customer.extendStay(askInt("Extra hours: "))) {
+                        System.out.println(customer.getReservation());
+                    }
+                } else if (ktv.cancelReservation(customer)) {
+                    System.out.println("reservation cancelled");
                 }
             }
         }
