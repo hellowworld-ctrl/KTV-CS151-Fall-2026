@@ -2,15 +2,18 @@ package customer;
 
 import java.util.ArrayList;
 
+import menu.Beverage;
+import menu.MenuItem;
 import reservation.Reservation;
 import reservation.Room;
 
 // a customer who books a room and pays a tab
+// alcohol requires age 21 or older and an id
 public class Customer {
 
-    // list of every customer
+    public static final int DRINKING_AGE = 21;
+
     private static ArrayList<Customer> allCustomers = new ArrayList<Customer>();
-    // next id to give out
     private static int nextId = 1;
 
     private int customerId;
@@ -21,9 +24,8 @@ public class Customer {
     private double tab;
     private Reservation reservation;
 
-    // makes a new customer
     public Customer(String name, String phoneNumber, int age) {
-        this.customerId = nextId++;
+        this.customerId = 0;
         this.name = "";
         this.phoneNumber = "";
         this.age = 0;
@@ -34,128 +36,251 @@ public class Customer {
         setName(name);
         setPhoneNumber(phoneNumber);
         setAge(age);
+        if (this.name.equals("") || this.phoneNumber.equals("") || this.age < 1) {
+            return;
+        }
+        if (allCustomers.size() >= MenuItem.MAX_ITEMS) {
+            System.out.println("customer list is full");
+            return;
+        }
+
+        this.customerId = nextId++;
+        allCustomers.add(this);
     }
 
-    // returns every customer
     public static ArrayList<Customer> getAllCustomers() {
         return allCustomers;
     }
 
-    // returns how many customers there are
     public static int getCustomerCount() {
         return allCustomers.size();
     }
 
-    // finds a customer by name
     public static Customer findCustomer(String name) {
+        if (name == null) {
+            return null;
+        }
+        String cleaned = name.trim();
+        for (int i = 0; i < allCustomers.size(); i++) {
+            if (allCustomers.get(i).name.equalsIgnoreCase(cleaned)) {
+                return allCustomers.get(i);
+            }
+        }
         return null;
     }
 
-    // removes a customer by name
     public static boolean removeCustomer(String name) {
-        return false;
+        Customer found = findCustomer(name);
+        if (found == null) {
+            System.out.println("could not find that customer");
+            return false;
+        }
+        if (found.reservation != null && found.reservation.isActive()) {
+            System.out.println(found.name + " still has an active room");
+            return false;
+        }
+        allCustomers.remove(found);
+        found.customerId = 0;
+        return true;
     }
 
-    // returns the customer id
     public int getCustomerId() {
         return customerId;
     }
 
-    // returns the name
     public String getName() {
         return name;
     }
 
-    // returns the phone number
     public String getPhoneNumber() {
         return phoneNumber;
     }
 
-    // returns the age
     public int getAge() {
         return age;
     }
 
-    // returns true if they showed an id
     public boolean hasId() {
         return hasId;
     }
 
-    // returns the tab
     public double getTab() {
         return tab;
     }
 
-    // returns their reservation
     public Reservation getReservation() {
         return reservation;
     }
 
-    // sets the name
     public void setName(String name) {
-        this.name = name;
+        if (name == null || name.trim().equals("")) {
+            System.out.println("name cannot be empty");
+            return;
+        }
+        this.name = name.trim();
     }
 
-    // sets the phone number
     public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+        if (phoneNumber == null || phoneNumber.trim().equals("")) {
+            System.out.println("phone number cannot be empty");
+            return;
+        }
+        String cleaned = phoneNumber.trim();
+        for (int i = 0; i < allCustomers.size(); i++) {
+            if (allCustomers.get(i) != this
+                    && allCustomers.get(i).phoneNumber.equals(cleaned)) {
+                System.out.println("a customer with that phone number already exists");
+                return;
+            }
+        }
+        this.phoneNumber = cleaned;
     }
 
-    // sets the age
     public void setAge(int age) {
+        if (age < 1) {
+            System.out.println("age has to be at least 1");
+            return;
+        }
         this.age = age;
     }
 
-    // books a room for this customer
     public Reservation bookRoom(Room room, int numberOfGuests, int hours) {
-        return null;
+        if (customerId == 0) {
+            System.out.println("customer was not added");
+            return null;
+        }
+        if (reservation != null && reservation.isActive()) {
+            System.out.println(name + " already has a room");
+            return null;
+        }
+        if (room == null) {
+            System.out.println("reservation needs a room");
+            return null;
+        }
+
+        Reservation booking = new Reservation(name, room, numberOfGuests, hours);
+        if (booking.getHours() <= 0 || booking.getNumberOfGuests() <= 0) {
+            return null;
+        }
+        if (!booking.confirmReservation()) {
+            return null;
+        }
+        reservation = booking;
+        addCharge(booking.calculateTotal());
+        return booking;
     }
 
-    // cancels the current booking
     public boolean cancelBooking() {
-        return false;
+        if (reservation == null || !reservation.isActive()) {
+            System.out.println("no active reservation to cancel");
+            return false;
+        }
+        double roomCost = reservation.calculateTotal();
+        if (!reservation.cancelReservation()) {
+            return false;
+        }
+        if (tab >= roomCost) {
+            tab = Math.round((tab - roomCost) * 100.0) / 100.0;
+        }
+        return true;
     }
 
-    // adds more hours to the booking
     public boolean extendStay(int additionalHours) {
-        return false;
+        if (reservation == null || !reservation.isActive()) {
+            System.out.println("no active reservation to extend");
+            return false;
+        }
+        if (!reservation.extendReservation(additionalHours)) {
+            return false;
+        }
+        addCharge(reservation.getRoom().calculateCost(additionalHours));
+        return true;
     }
 
-    // adds a charge to the tab
     public boolean addCharge(double amount) {
-        return false;
+        if (amount < 0) {
+            System.out.println("charge cannot be negative");
+            return false;
+        }
+        tab = Math.round((tab + amount) * 100.0) / 100.0;
+        return true;
     }
 
-    // pays some of the tab
     public double pay(double amount) {
-        return 0;
+        if (amount <= 0) {
+            System.out.println("payment has to be more than 0");
+            return 0;
+        }
+        amount = Math.round(amount * 100.0) / 100.0;
+        if (amount > tab) {
+            System.out.println("payment is more than the tab");
+            return 0;
+        }
+        tab = Math.round((tab - amount) * 100.0) / 100.0;
+        return amount;
     }
 
-    // marks that the customer showed an id
+    // under 21 can show up, but the id does not let them buy alcohol
     public boolean showId() {
-        return false;
+        if (customerId == 0) {
+            System.out.println("customer was not added");
+            return false;
+        }
+        if (age < DRINKING_AGE) {
+            System.out.println(name + " has to be " + DRINKING_AGE + " or older for alcohol");
+            return false;
+        }
+        hasId = true;
+        return true;
     }
 
-    // returns how much they owe
+    public double orderDrink(Beverage drink, int amount) {
+        if (customerId == 0 || reservation == null || !reservation.isActive()) {
+            System.out.println(name + " needs an active room to order");
+            return -1;
+        }
+        if (drink == null) {
+            System.out.println("that drink is not on the menu");
+            return -1;
+        }
+        if (drink.needsIdCheck() && (age < DRINKING_AGE || !hasId)) {
+            System.out.println(name + " has to be " + DRINKING_AGE
+                    + " or older and show an id for alcohol");
+            return -1;
+        }
+
+        double total = drink.buy(amount, hasId);
+        if (total < 0) {
+            return -1;
+        }
+        addCharge(total);
+        return total;
+    }
+
     public double amountDue() {
-        return 0;
+        return tab;
     }
 
-    // returns the customer info
     @Override
     public String toString() {
-        return "";
+        return name + " (#" + customerId + ", age " + age + ", tab $"
+                + String.format("%.2f", tab) + ")";
     }
 
-    // checks if two customers are the same
     @Override
     public boolean equals(Object other) {
-        return false;
+        if (other == null || this.getClass() != other.getClass()) {
+            return false;
+        }
+        Customer customer = (Customer) other;
+        if (phoneNumber.equals("")) {
+            return false;
+        }
+        return phoneNumber.equals(customer.phoneNumber);
     }
 
-    // returns a hash code for this customer
     @Override
     public int hashCode() {
-        return 0;
+        return phoneNumber.hashCode();
     }
 }
