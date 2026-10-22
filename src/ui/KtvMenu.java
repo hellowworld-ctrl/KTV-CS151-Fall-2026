@@ -18,6 +18,7 @@ public class KtvMenu {
     public static void main(String[] args) {
         FoodItem.loadKtvFood();
         Beverage.loadKtvDrinks();
+        System.out.println("Type EXIT in all caps at any prompt to quit");
 
         boolean running = true;
         while (running) {
@@ -54,11 +55,21 @@ public class KtvMenu {
         return readChoice(1, lastNumber);
     }
 
+    // every prompt comes through here, so EXIT works anywhere
+    private static String readLine() {
+        String line = scanner.nextLine().trim();
+        if (line.equals("EXIT")) {
+            System.out.println("Thanks for checking out the KTV");
+            System.exit(0);
+        }
+        return line;
+    }
+
     // keeps asking until the number is in range
     private static int readChoice(int min, int max) {
         while (true) {
             System.out.print("Enter a choice (" + min + " - " + max + "): ");
-            String line = scanner.nextLine().trim();
+            String line = readLine();
             try {
                 int choice = Integer.parseInt(line);
                 if (choice >= min && choice <= max) {
