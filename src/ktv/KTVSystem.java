@@ -3,6 +3,7 @@ package ktv;
 import java.util.ArrayList;
 
 import customer.Customer;
+import menu.MenuItem;
 import reservation.Reservation;
 import reservation.Room;
 
@@ -39,25 +40,73 @@ public class KTVSystem {
     }
 
     // adds a room
-    public void addRoom(Room room) {
+    public boolean addRoom(Room room) {
+        if (room == null) {
+            System.out.println("room cannot be empty");
+            return false;
+        }
+        if (findRoom(room.getRoomId()) != null) {
+            System.out.println("that room already exists");
+            return false;
+        }
+        if (rooms.size() >= MenuItem.MAX_ITEMS) {
+            System.out.println("room list is full");
+            return false;
+        }
+        rooms.add(room);
+        return true;
     }
 
     // adds a customer
-    public void addCustomer(Customer customer) {
+    public boolean addCustomer(Customer customer) {
+        if (customer == null || customer.getCustomerId() == 0) {
+            return false;
+        }
+        for (int i = 0; i < customers.size(); i++) {
+            if (customers.get(i).getPhoneNumber().equals(customer.getPhoneNumber())) {
+                System.out.println("that customer is already in the ktv");
+                return false;
+            }
+        }
+        customers.add(customer);
+        return true;
     }
 
     // makes a reservation for a customer and a room
     public Reservation makeReservation(Customer customer, Room room, int guests, int hours) {
-        return null;
+        if (customer == null || room == null) {
+            System.out.println("need a customer and a room");
+            return null;
+        }
+        Reservation booking = customer.bookRoom(room, guests, hours);
+        if (booking == null) {
+            return null;
+        }
+        reservations.add(booking);
+        return booking;
     }
 
     // finds a room by id
     public Room findRoom(int roomId) {
+        for (int i = 0; i < rooms.size(); i++) {
+            if (rooms.get(i).getRoomId() == roomId) {
+                return rooms.get(i);
+            }
+        }
         return null;
     }
 
     // finds a customer by name
     public Customer findCustomer(String name) {
+        if (name == null) {
+            return null;
+        }
+        String cleaned = name.trim();
+        for (int i = 0; i < customers.size(); i++) {
+            if (customers.get(i).getName().equalsIgnoreCase(cleaned)) {
+                return customers.get(i);
+            }
+        }
         return null;
     }
 
