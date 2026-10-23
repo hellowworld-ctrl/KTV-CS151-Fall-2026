@@ -1,6 +1,8 @@
 package reservation;
 
-public class Room {
+import billing.Billable;
+
+public class Room implements Billable {
     private int roomId;
     private int capacity;
     private double hourlyRate;
@@ -57,6 +59,7 @@ public class Room {
         return numberOfGuests <= capacity;
     }
 
+    @Override 
     public double calculateCost(int hours) {
         if (hours <= 0) {
             System.out.println("hours has to be at least 1");

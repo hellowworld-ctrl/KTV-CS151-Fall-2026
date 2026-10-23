@@ -1,6 +1,5 @@
 package ui;
 
-import java.util.ArrayList;
 import java.util.Scanner;
 
 import customer.Customer;
@@ -10,66 +9,250 @@ import menu.FoodItem;
 import reservation.Reservation;
 import reservation.Room;
 
-// text menu for the ktv
-// this is the only Scanner in the repo
 public class KtvMenu {
 
     private static Scanner scanner = new Scanner(System.in);
     private static KTVSystem ktv = new KTVSystem("KTV");
 
     public static void main(String[] args) {
+
         FoodItem.loadKtvFood();
         Beverage.loadKtvDrinks();
-        System.out.println("Type EXIT in all caps at any prompt to quit");
 
         boolean running = true;
+
         while (running) {
-            int choice = openMenu("Main Menu", new String[] {
-                    "Customer", "Food", "Drinks", "Room", "Reservation"
-            }, "Exit");
+
+            showMenu();
+
+            int choice = askInt("Enter a choice: ");
+
             if (choice == 1) {
-                customerMenu();
+                addCustomer();
+
             } else if (choice == 2) {
-                foodMenu();
+                addRoom();
+
             } else if (choice == 3) {
-                drinkMenu();
+                makeReservation();
+
             } else if (choice == 4) {
-                roomMenu();
+                viewReservation();
+
             } else if (choice == 5) {
-                reservationMenu();
-            } else {
+                viewMenu();
+
+            } else if (choice == 6) {
+                orderFood();
+
+            } else if (choice == 7) {
+                orderDrink();
+
+            } else if (choice == 8) {
+                extendReservation();
+
+            } else if (choice == 9) {
+                cancelReservation();
+
+            } else if (choice == 10) {
+                payTab();
+
+            } else if (choice == 11) {
                 running = false;
+
+            } else {
+                System.out.println("Please enter a number from 1 to 11.");
+
             }
         }
-        System.out.println("goodbye");
+
+        System.out.println("Goodbye!");
     }
 
-    // prints a numbered menu and returns the choice
-    private static int openMenu(String title, String[] choices, String last) {
+    private static void showMenu() {
         System.out.println();
-        System.out.println(title);
+        System.out.println("KTV SYSTEM");
         System.out.println("-----------------");
-        for (int i = 0; i < choices.length; i++) {
-            System.out.println((i + 1) + ". " + choices[i]);
-        }
-        int lastNumber = choices.length + 1;
-        System.out.println(lastNumber + ". " + last);
-        return readChoice(1, lastNumber);
+        System.out.println("1. Add customer");
+        System.out.println("2. Add room");
+        System.out.println("3. Make reservation");
+        System.out.println("4. View reservation");
+        System.out.println("5. View menu");
+        System.out.println("6. Order food");
+        System.out.println("7. Order drink");
+        System.out.println("8. Extend reservation");
+        System.out.println("9. Cancel reservation");
+        System.out.println("10. Pay tab");
+        System.out.println("11. Exit");
     }
 
-    // every prompt comes through here, so EXIT works anywhere
-    private static String readLine() {
-        String line = scanner.nextLine().trim();
-        if (line.equals("EXIT")) {
-            System.out.println("Thanks for checking out the KTV");
-            System.exit(0);
+    private static void addCustomer() {
+        String name = ask("Name: ");
+        String phone = ask("Phone number: ");
+        int age = askInt("Age: ");
+
+        Customer customer = new Customer(name, phone, age);
+
+        if (ktv.addCustomer(customer)) {
+            System.out.println("Customer added.");
         }
-        return line;
+    }
+
+    private static void addRoom() {
+        int roomId = askInt("Room ID: ");
+        int capacity = askInt("Capacity: ");
+        double hourlyRate = askDouble("Hourly rate: ");
+
+        Room room = new Room(roomId, capacity, hourlyRate);
+
+        if (ktv.addRoom(room)) {
+            System.out.println("Room added.");
+        }
+    }
+
+    private static void makeReservation() {
+        String name = ask("Customer name: ");
+        int roomId = askInt("Room ID: ");
+        int guests = askInt("Number of guests: ");
+        int hours = askInt("Hours: ");
+
+        Customer customer = ktv.findCustomer(name);
+        Room room = ktv.findRoom(roomId);
+
+        Reservation reservation =
+                ktv.makeReservation(customer, room, guests, hours);
+
+        if (reservation != null) {
+            System.out.println("Reservation confirmed!");
+            System.out.println(reservation);
+        }
+    }
+
+    private static void viewReservation() {
+        Customer customer =
+                ktv.findCustomer(ask("Customer name: "));
+
+        if (customer == null || customer.getReservation() == null) {
+            System.out.println("No reservation found.");
+            return;
+        }
+
+        System.out.println(customer.getReservation());
+    }
+
+    private static void viewMenu() {
+
+        System.out.println();
+        System.out.println("FOOD");
+        System.out.println("-----------------");
+
+        for (FoodItem food : FoodItem.getAllFood()) {
+            System.out.println(food);
+        }
+
+        System.out.println();
+        System.out.println("DRINKS");
+        System.out.println("-----------------");
+
+        for (Beverage drink : Beverage.getAllDrinks()) {
+            System.out.println(drink);
+        }
+    }
+
+    private static void orderFood() {
+        Customer customer = ktv.findCustomer(ask("Customer name: "));
+
+        if (customer == null) {
+            System.out.println("Customer not found.");
+            return;
+        }
+
+        FoodItem food = FoodItem.findFood(ask("Food: "));
+        int people = askInt("How many people: ");
+
+        customer.orderFood(food, people);
+    }
+
+    private static void orderDrink() {
+
+        Customer customer =
+                ktv.findCustomer(ask("Customer name: "));
+
+        if (customer == null) {
+            System.out.println("Customer not found.");
+            return;
+        }
+
+        String drinkName = ask("Drink: ");
+        Beverage drink = Beverage.findDrink(drinkName);
+
+        int amount = askInt("How many: ");
+
+        customer.orderDrink(drink, amount);
+    }
+
+    private static void extendReservation() {
+
+        Customer customer =
+                ktv.findCustomer(ask("Customer name: "));
+
+        if (customer == null) {
+            System.out.println("Customer not found.");
+            return;
+        }
+
+        int hours = askInt("Additional hours: ");
+
+        if (customer.extendStay(hours)) {
+            System.out.println("Reservation extended.");
+            System.out.println(customer.getReservation());
+        }
+    }
+
+    private static void cancelReservation() {
+
+        Customer customer =
+                ktv.findCustomer(ask("Customer name: "));
+
+        if (ktv.cancelReservation(customer)) {
+            System.out.println("Reservation cancelled.");
+        }
+    }
+
+    private static void payTab() {
+
+        Customer customer =
+                ktv.findCustomer(ask("Customer name: "));
+
+        if (customer == null) {
+            System.out.println("Customer not found.");
+            return;
+        }
+
+        System.out.println(
+                "Current tab: $" +
+                String.format("%.2f", customer.amountDue()));
+
+        double amount = askDouble("Payment amount: ");
+
+        if (customer.pay(amount) > 0) {
+            System.out.println(
+                    "Remaining tab: $" +
+                    String.format("%.2f", customer.amountDue()));
+        }
     }
 
     private static String ask(String prompt) {
         System.out.print(prompt);
-        return readLine();
+
+        String input = scanner.nextLine().trim();
+
+        if (input.equals("EXIT")) {
+            System.out.println("Thanks for visiting the KTV!");
+            System.exit(0);
+        }
+
+        return input;
     }
 
     private static int askInt(String prompt) {
@@ -77,7 +260,7 @@ public class KtvMenu {
             try {
                 return Integer.parseInt(ask(prompt));
             } catch (NumberFormatException e) {
-                System.out.println("enter a whole number");
+                System.out.println("Please enter a whole number.");
             }
         }
     }
@@ -87,194 +270,8 @@ public class KtvMenu {
             try {
                 return Double.parseDouble(ask(prompt));
             } catch (NumberFormatException e) {
-                System.out.println("enter a number");
+                System.out.println("Please enter a number.");
             }
-        }
-    }
-
-    // keeps asking until the number is in range
-    private static int readChoice(int min, int max) {
-        while (true) {
-            System.out.print("Enter a choice (" + min + " - " + max + "): ");
-            try {
-                int choice = Integer.parseInt(readLine());
-                if (choice >= min && choice <= max) {
-                    return choice;
-                }
-            } catch (NumberFormatException e) {
-                // not a number, ask again
-            }
-            System.out.println("enter a number from " + min + " to " + max);
-        }
-    }
-
-    private static void customerMenu() {
-        String[] choices = new String[] {
-                "Add a customer", "Show all customers", "Find a customer",
-                "Show an ID", "Book a room", "Order a drink", "Pay the tab"
-        };
-        boolean back = false;
-        while (!back) {
-            int choice = openMenu("Customer Menu", choices, "Back to main menu");
-            if (choice == 1) {
-                ktv.addCustomer(new Customer(ask("Name: "), ask("Phone number: "), askInt("Age: ")));
-            } else if (choice == 2) {
-                showAll(ktv.getCustomers(), "no customers yet");
-            } else if (choice == 3) {
-                Customer customer = ktv.findCustomer(ask("Customer name: "));
-                if (customer == null) {
-                    System.out.println("could not find that customer");
-                } else {
-                    System.out.println(customer);
-                }
-            } else if (choice == 4) {
-                Customer customer = ktv.findCustomer(ask("Customer name: "));
-                if (customer == null) {
-                    System.out.println("could not find that customer");
-                } else if (customer.showId()) {
-                    System.out.println("id checked");
-                }
-            } else if (choice == 5) {
-                Reservation booking = ktv.makeReservation(ktv.findCustomer(ask("Customer name: ")),
-                        ktv.findRoom(askInt("Room id: ")),
-                        askInt("Guests: "), askInt("Hours: "));
-                if (booking != null) {
-                    System.out.println(booking);
-                }
-            } else if (choice == 6) {
-                Customer customer = ktv.findCustomer(ask("Customer name: "));
-                if (customer == null) {
-                    System.out.println("could not find that customer");
-                } else {
-                    customer.orderDrink(Beverage.findDrink(ask("Drink: ")), askInt("How many: "));
-                }
-            } else if (choice == 7) {
-                Customer customer = ktv.findCustomer(ask("Customer name: "));
-                if (customer == null) {
-                    System.out.println("could not find that customer");
-                } else if (customer.pay(askDouble("Amount: ")) > 0) {
-                    System.out.println(customer);
-                }
-            } else {
-                back = true;
-            }
-        }
-    }
-
-    private static void foodMenu() {
-        String[] choices = new String[] {
-                "Show the food menu", "Order for a group", "Make a dish spicier"
-        };
-        boolean back = false;
-        while (!back) {
-            int choice = openMenu("Food Menu", choices, "Back to main menu");
-            if (choice == 1) {
-                showAll(FoodItem.getAllFood(), "no food yet");
-            } else if (choice == choices.length + 1) {
-                back = true;
-            } else {
-                FoodItem food = FoodItem.findFood(ask("Food: "));
-                if (food == null) {
-                    System.out.println("could not find that food");
-                } else if (choice == 2) {
-                    food.orderForGroup(askInt("People: "));
-                } else {
-                    food.makeSpicier();
-                    System.out.println(food);
-                }
-            }
-        }
-    }
-
-    private static void drinkMenu() {
-        String[] choices = new String[] {
-                "Show the drink menu", "Order a drink", "Buy a bucket",
-                "Start happy hour"
-        };
-        boolean back = false;
-        while (!back) {
-            int choice = openMenu("Drink Menu", choices, "Back to main menu");
-            if (choice == 1) {
-                showAll(Beverage.getAllDrinks(), "no drinks yet");
-            } else if (choice == choices.length + 1) {
-                back = true;
-            } else {
-                Beverage drink = Beverage.findDrink(ask("Drink: "));
-                if (drink == null) {
-                    System.out.println("could not find that drink");
-                } else if (choice == 2) {
-                    drink.buy(askInt("How many: "),
-                            ask("Shown an id (yes/no): ").equalsIgnoreCase("yes"));
-                } else if (choice == 3) {
-                    drink.buyBucket(ask("Shown an id (yes/no): ").equalsIgnoreCase("yes"));
-                } else {
-                    drink.applyHappyHour();
-                    System.out.println(drink);
-                }
-            }
-        }
-    }
-
-    private static void roomMenu() {
-        String[] choices = new String[] {
-                "Add a room", "Show all rooms", "Check the cost"
-        };
-        boolean back = false;
-        while (!back) {
-            int choice = openMenu("Room Menu", choices, "Back to main menu");
-            if (choice == 1) {
-                ktv.addRoom(new Room(askInt("Room id: "), askInt("Capacity: "),
-                        askInt("Hourly rate: ")));
-            } else if (choice == 2) {
-                showAll(ktv.getRooms(), "no rooms yet");
-            } else if (choice == 3) {
-                Room room = ktv.findRoom(askInt("Room id: "));
-                if (room == null) {
-                    System.out.println("could not find that room");
-                } else {
-                    System.out.println("$" + String.format("%.2f",
-                            room.calculateCost(askInt("Hours: "))));
-                }
-            } else {
-                back = true;
-            }
-        }
-    }
-
-    private static void reservationMenu() {
-        String[] choices = new String[] {
-                "Show a reservation", "Extend a stay", "Cancel a reservation"
-        };
-        boolean back = false;
-        while (!back) {
-            int choice = openMenu("Reservation Menu", choices, "Back to main menu");
-            if (choice == choices.length + 1) {
-                back = true;
-            } else {
-                Customer customer = ktv.findCustomer(ask("Customer name: "));
-                if (customer == null || customer.getReservation() == null
-                        || !customer.getReservation().isActive()) {
-                    System.out.println("no reservation");
-                } else if (choice == 1) {
-                    System.out.println(customer.getReservation());
-                } else if (choice == 2) {
-                    if (customer.extendStay(askInt("Extra hours: "))) {
-                        System.out.println(customer.getReservation());
-                    }
-                } else if (ktv.cancelReservation(customer)) {
-                    System.out.println("reservation cancelled");
-                }
-            }
-        }
-    }
-
-    private static void showAll(ArrayList<?> items, String empty) {
-        if (items.size() == 0) {
-            System.out.println(empty);
-            return;
-        }
-        for (int i = 0; i < items.size(); i++) {
-            System.out.println(items.get(i));
         }
     }
 }

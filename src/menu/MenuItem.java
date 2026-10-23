@@ -1,7 +1,9 @@
 package menu;
 
+import billing.Billable;
+
 // stuff every ktv menu item has in common
-public abstract class MenuItem {
+public abstract class MenuItem implements Billable {
 
     public static final int MAX_ITEMS = 100;
 
@@ -110,6 +112,11 @@ public abstract class MenuItem {
             total = total * 0.90;
         }
         return Math.round(total * 100.0) / 100.0;
+    }
+
+    @Override
+    public double calculateCost(int amount) {
+        return quote(amount);
     }
 
     public String discountNote(int amount) {

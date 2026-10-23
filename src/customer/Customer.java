@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import menu.Beverage;
 import menu.MenuItem;
+import menu.FoodItem;
 import reservation.Reservation;
 import reservation.Room;
 
@@ -232,6 +233,27 @@ public class Customer {
         }
         hasId = true;
         return true;
+    }
+
+    public double orderFood(FoodItem food, int people) {
+        if (customerId == 0 || reservation == null || !reservation.isActive()) {
+            System.out.println(name + " needs an active room to order");
+            return -1;
+        }
+
+        if (food == null) {
+            System.out.println("that food is not on the menu");
+            return -1;
+        }
+
+        double total = food.orderForGroup(people);
+
+        if (total < 0) {
+            return -1;
+        }
+
+        addCharge(total);
+        return total;
     }
 
     public double orderDrink(Beverage drink, int amount) {
