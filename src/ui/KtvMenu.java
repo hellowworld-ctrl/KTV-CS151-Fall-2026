@@ -244,7 +244,15 @@ public class KtvMenu {
 
     private static String ask(String prompt) {
         System.out.print(prompt);
-        return scanner.nextLine().trim();
+
+        String input = scanner.nextLine().trim();
+
+        if (input.equals("EXIT")) {
+            System.out.println("Thanks for visiting the KTV!");
+            System.exit(0);
+        }
+
+        return input;
     }
 
     private static int askInt(String prompt) {
