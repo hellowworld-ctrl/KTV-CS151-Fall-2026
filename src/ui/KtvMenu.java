@@ -43,22 +43,26 @@ public class KtvMenu {
                 viewMenu();
 
             } else if (choice == 6) {
-                orderDrink();
+                orderFood();
 
             } else if (choice == 7) {
-                extendReservation();
+                orderDrink();
 
             } else if (choice == 8) {
-                cancelReservation();
+                extendReservation();
 
             } else if (choice == 9) {
-                payTab();
+                cancelReservation();
 
             } else if (choice == 10) {
+                payTab();
+
+            } else if (choice == 11) {
                 running = false;
 
             } else {
-                System.out.println("Please enter a number from 1 to 10.");
+                System.out.println("Please enter a number from 1 to 11.");
+
             }
         }
 
@@ -74,11 +78,12 @@ public class KtvMenu {
         System.out.println("3. Make reservation");
         System.out.println("4. View reservation");
         System.out.println("5. View menu");
-        System.out.println("6. Order drink");
-        System.out.println("7. Extend reservation");
-        System.out.println("8. Cancel reservation");
-        System.out.println("9. Pay tab");
-        System.out.println("10. Exit");
+        System.out.println("6. Order food");
+        System.out.println("7. Order drink");
+        System.out.println("8. Extend reservation");
+        System.out.println("9. Cancel reservation");
+        System.out.println("10. Pay tab");
+        System.out.println("11. Exit");
     }
 
     private static void addCustomer() {
@@ -152,6 +157,20 @@ public class KtvMenu {
         for (Beverage drink : Beverage.getAllDrinks()) {
             System.out.println(drink);
         }
+    }
+
+    private static void orderFood() {
+        Customer customer = ktv.findCustomer(ask("Customer name: "));
+
+        if (customer == null) {
+            System.out.println("Customer not found.");
+            return;
+        }
+
+        FoodItem food = FoodItem.findFood(ask("Food: "));
+        int people = askInt("How many people: ");
+
+        customer.orderFood(food, people);
     }
 
     private static void orderDrink() {
