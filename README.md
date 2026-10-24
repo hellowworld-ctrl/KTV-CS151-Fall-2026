@@ -31,7 +31,7 @@ The code covers the food and drink menu, rooms, reservations, customers, the KTV
 
 `KtvMenu` in the `ui` package is the text menu. It is the only place that reads input. The main menu leads to customer, food, drink, room, and reservation choices. Typing `EXIT` in all caps at any prompt quits and thanks the user.
 
-`MenuItem` and `Room` implement the `Billable` interface. The class diagram is below.
+`MenuItem` and `Room` implement the `Billable` interface. Updated class diagram:
 
 ![KTV class diagram](UML.jpg)
 
