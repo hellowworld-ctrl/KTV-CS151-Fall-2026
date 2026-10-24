@@ -3,6 +3,9 @@ package ui;
 import java.util.Scanner;
 
 import customer.Customer;
+import exception.InvalidOrderException;
+import exception.InvalidPaymentException;
+import exception.UnderageException;
 import ktv.KTVSystem;
 import menu.Beverage;
 import menu.FoodItem;
@@ -46,22 +49,25 @@ public class KtvMenu {
                 orderFood();
 
             } else if (choice == 7) {
-                orderDrink();
+                showId();
 
             } else if (choice == 8) {
-                extendReservation();
+                orderDrink();
 
             } else if (choice == 9) {
-                cancelReservation();
+                extendReservation();
 
             } else if (choice == 10) {
-                payTab();
+                cancelReservation();
 
             } else if (choice == 11) {
+                payTab();
+
+            } else if (choice == 12) {
                 running = false;
 
             } else {
-                System.out.println("Please enter a number from 1 to 11.");
+                System.out.println("Please enter a number from 1 to 12.");
 
             }
         }
@@ -79,11 +85,12 @@ public class KtvMenu {
         System.out.println("4. View reservation");
         System.out.println("5. View menu");
         System.out.println("6. Order food");
-        System.out.println("7. Order drink");
-        System.out.println("8. Extend reservation");
-        System.out.println("9. Cancel reservation");
-        System.out.println("10. Pay tab");
-        System.out.println("11. Exit");
+        System.out.println("7. Show ID");
+        System.out.println("8. Order drink");
+        System.out.println("9. Extend reservation");
+        System.out.println("10. Cancel reservation");
+        System.out.println("11. Pay tab");
+        System.out.println("12. Exit");
     }
 
     private static void addCustomer() {
@@ -160,44 +167,55 @@ public class KtvMenu {
     }
 
     private static void orderFood() {
-        Customer customer = ktv.findCustomer(ask("Customer name: "));
-
+        Customer customer = askCustomer();
         if (customer == null) {
-            System.out.println("Customer not found.");
             return;
         }
 
         FoodItem food = FoodItem.findFood(ask("Food: "));
         int people = askInt("How many people: ");
 
-        customer.orderFood(food, people);
+        try {
+            customer.orderFood(food, people);
+        } catch (InvalidOrderException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
-    private static void orderDrink() {
-
-        Customer customer =
-                ktv.findCustomer(ask("Customer name: "));
-
+    private static void showId() {
+        Customer customer = askCustomer();
         if (customer == null) {
-            System.out.println("Customer not found.");
             return;
         }
 
-        String drinkName = ask("Drink: ");
-        Beverage drink = Beverage.findDrink(drinkName);
+        try {
+            if (customer.showId()) {
+                System.out.println(customer.getName() + " showed an id.");
+            }
+        } catch (UnderageException e) {
+            System.out.println(e.getMessage());
+        }
+    }
 
+    private static void orderDrink() {
+        Customer customer = askCustomer();
+        if (customer == null) {
+            return;
+        }
+
+        Beverage drink = Beverage.findDrink(ask("Drink: "));
         int amount = askInt("How many: ");
 
-        customer.orderDrink(drink, amount);
+        try {
+            customer.orderDrink(drink, amount);
+        } catch (UnderageException | InvalidOrderException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private static void extendReservation() {
-
-        Customer customer =
-                ktv.findCustomer(ask("Customer name: "));
-
+        Customer customer = askCustomer();
         if (customer == null) {
-            System.out.println("Customer not found.");
             return;
         }
 
@@ -220,12 +238,8 @@ public class KtvMenu {
     }
 
     private static void payTab() {
-
-        Customer customer =
-                ktv.findCustomer(ask("Customer name: "));
-
+        Customer customer = askCustomer();
         if (customer == null) {
-            System.out.println("Customer not found.");
             return;
         }
 
@@ -235,11 +249,23 @@ public class KtvMenu {
 
         double amount = askDouble("Payment amount: ");
 
-        if (customer.pay(amount) > 0) {
-            System.out.println(
-                    "Remaining tab: $" +
-                    String.format("%.2f", customer.amountDue()));
+        try {
+            if (customer.pay(amount) > 0) {
+                System.out.println(
+                        "Remaining tab: $" +
+                        String.format("%.2f", customer.amountDue()));
+            }
+        } catch (InvalidPaymentException e) {
+            System.out.println(e.getMessage());
         }
+    }
+
+    private static Customer askCustomer() {
+        Customer customer = ktv.findCustomer(ask("Customer name: "));
+        if (customer == null) {
+            System.out.println("Customer not found.");
+        }
+        return customer;
     }
 
     private static String ask(String prompt) {
