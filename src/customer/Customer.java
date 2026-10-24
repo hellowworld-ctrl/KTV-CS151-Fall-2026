@@ -2,6 +2,9 @@ package customer;
 
 import java.util.ArrayList;
 
+import exception.InvalidOrderException;
+import exception.InvalidPaymentException;
+import exception.UnderageException;
 import menu.Beverage;
 import menu.MenuItem;
 import menu.FoodItem;
@@ -207,70 +210,62 @@ public class Customer {
         return true;
     }
 
-    public double pay(double amount) {
+    public double pay(double amount) throws InvalidPaymentException {
         if (amount <= 0) {
-            System.out.println("payment has to be more than 0");
-            return 0;
+            throw new InvalidPaymentException("payment has to be more than 0");
         }
         amount = Math.round(amount * 100.0) / 100.0;
         if (amount > tab) {
-            System.out.println("payment is more than the tab");
-            return 0;
+            throw new InvalidPaymentException("payment is more than the tab");
         }
         tab = Math.round((tab - amount) * 100.0) / 100.0;
         return amount;
     }
 
     // under 21 can show up, but the id does not let them buy alcohol
-    public boolean showId() {
+    public boolean showId() throws UnderageException {
         if (customerId == 0) {
             System.out.println("customer was not added");
             return false;
         }
         if (age < DRINKING_AGE) {
-            System.out.println(name + " has to be " + DRINKING_AGE + " or older for alcohol");
-            return false;
+            throw new UnderageException(name + " has to be " + DRINKING_AGE
+                    + " or older for alcohol");
         }
         hasId = true;
         return true;
     }
 
-    public double orderFood(FoodItem food, int people) {
+    public double orderFood(FoodItem food, int people) throws InvalidOrderException {
         if (customerId == 0 || reservation == null || !reservation.isActive()) {
-            System.out.println(name + " needs an active room to order");
-            return -1;
+            throw new InvalidOrderException(name + " needs an active room to order");
         }
-
         if (food == null) {
-            System.out.println("that food is not on the menu");
-            return -1;
+            throw new InvalidOrderException("that food is not on the menu");
         }
-
         double total = food.orderForGroup(people);
-
         if (total < 0) {
             return -1;
         }
-
         addCharge(total);
         return total;
     }
 
-    public double orderDrink(Beverage drink, int amount) {
+    public double orderDrink(Beverage drink, int amount)
+            throws UnderageException, InvalidOrderException {
         if (customerId == 0 || reservation == null || !reservation.isActive()) {
-            System.out.println(name + " needs an active room to order");
-            return -1;
+            throw new InvalidOrderException(name + " needs an active room to order");
         }
         if (drink == null) {
-            System.out.println("that drink is not on the menu");
-            return -1;
+            throw new InvalidOrderException("that drink is not on the menu");
         }
-        if (drink.needsIdCheck() && (age < DRINKING_AGE || !hasId)) {
-            System.out.println(name + " has to be " + DRINKING_AGE
-                    + " or older and show an id for alcohol");
-            return -1;
+        if (drink.needsIdCheck() && age < DRINKING_AGE) {
+            throw new UnderageException(name + " has to be " + DRINKING_AGE
+                    + " or older for alcohol");
         }
-
+        if (drink.needsIdCheck() && !hasId) {
+            throw new InvalidOrderException(name + " has to show an id for alcohol");
+        }
         double total = drink.buy(amount, hasId);
         if (total < 0) {
             return -1;
