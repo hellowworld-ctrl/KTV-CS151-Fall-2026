@@ -17,7 +17,7 @@ The code covers the food and drink menu, rooms, reservations, customers, the KTV
 | Name | GitHub | Ownership |
 | --- | --- | --- |
 | Volodymyr Surin | [hellowworld-ctrl](https://github.com/hellowworld-ctrl) | `MenuItem`, `FoodItem`, `Beverage`, `Customer`, `KTVSystem`, `KtvMenu`, and this README |
-| Thet Noe (Sky) | [galatic-milkshake](https://github.com/galatic-milkshake) | `Room` and `Reservation` |
+| Thet Noe (Sky) | [galatic-milkshake](https://github.com/galatic-milkshake) | `Room`, `Reservation`, `Billable` interface, and unit tests for `Room` and `Reservation` |
 
 ## Design
 
@@ -29,9 +29,11 @@ The code covers the food and drink menu, rooms, reservations, customers, the KTV
 
 `KTVSystem` holds the rooms, customers, and reservations for one karaoke bar. It adds a room or a customer, books a room, and cancels a reservation.
 
-`KtvMenu` in the `ui` package is the text menu. It is the only place that reads input. The main menu leads to customer, food, drink, room, and reservation choices. Typing `EXIT` in all caps at any prompt quits and thanks the user.
+`KtvMenu` in the `ui` package is the text menu. It is the only place that reads user input. The main menu allows users to add customers and rooms, make and view reservations, view the menu, order food and drinks, extend or cancel reservations, pay customer tabs, and exit the program. Typing `EXIT` in all caps at any prompt quits the program.
 
-`MenuItem` and `Room` implement the `Billable` interface. Updated class diagram:
+`MenuItem` and `Room` implement the `Billable` interface. Both classes can calculate a cost, but `Room` calculates cost based on hours while `MenuItem` calculates cost based on quantity. This allows different types of billable objects to share the same `calculateCost()` behavior while providing their own implementation.
+
+Updated class diagram:
 
 ![KTV class diagram](UML.jpg)
 
@@ -47,7 +49,7 @@ cd KTV-CS151-Fall-2026
 Compile from the project root:
 
 ```bash
-javac -d out src/menu/*.java src/reservation/*.java src/customer/*.java src/ktv/*.java src/ui/*.java
+javac -d out $(find src -name "*.java")
 ```
 
 ## Usage
@@ -58,7 +60,7 @@ Run the text menu from the project root:
 java -cp out ui.KtvMenu
 ```
 
-Choice 6 on the main menu prints goodbye. `EXIT` in all caps works at any prompt.
+Choice 11 on the main menu exits the program. Typing `EXIT` in all caps at any prompt also exits the program.
 
 `FoodItem` also has a small demo that prints the starter food and drinks and places a few sample orders:
 
@@ -71,4 +73,4 @@ java -cp out menu.FoodItem
 ## Contributions
 
 - **Volodymyr Surin:** Added this README. Added `MenuItem`, `FoodItem`, and `Beverage`, including bulk discounts and happy hour. Added `Customer`, including the tab and the 21+ check for alcohol. Added `KTVSystem` and `KtvMenu`, including the all-caps `EXIT` quit.
-- **Thet Noe (Sky):** Added `Room` and `Reservation`. A room stores its capacity, hourly rate, and availability, and it can check guests in and out. A reservation stores the customer name, room, guest count, and hours, and it can confirm, cancel, or extend the booking and calculate the room cost.
+- **Thet Noe (Sky):** Added `Room` and `Reservation`. `Room` manages room capacity, hourly rate, availability, cost calculation, and check-in/check-out behavior. `Reservation` manages booking information, confirmation, cancellation, extension, and room cost. Added the `Billable` interface for shared cost-calculation behavior between `Room` and `MenuItem`. Added unit tests for `Room` and `Reservation`.
