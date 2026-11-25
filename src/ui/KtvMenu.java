@@ -2,6 +2,7 @@ package ui;
 
 import java.util.Scanner;
 
+import billing.Parking;
 import customer.Customer;
 import exception.InvalidOrderException;
 import exception.InvalidPaymentException;
@@ -66,8 +67,11 @@ public class KtvMenu {
             } else if (choice == 12) {
                 running = false;
 
+            } else if (choice == 13) {
+                payForParking();
+
             } else {
-                System.out.println("Please enter a number from 1 to 12.");
+                System.out.println("Please enter a number from 1 to 13.");
 
             }
         }
@@ -91,6 +95,7 @@ public class KtvMenu {
         System.out.println("10. Cancel reservation");
         System.out.println("11. Pay tab");
         System.out.println("12. Exit");
+        System.out.println("13. Pay for parking");
     }
 
     private static void addCustomer() {
@@ -258,6 +263,18 @@ public class KtvMenu {
         } catch (InvalidPaymentException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    private static void payForParking() {
+        int hours = askInt("Parking hours: ");
+        if (hours <= 0) {
+            System.out.println("Enter at least one hour.");
+            return;
+        }
+
+        Parking parking = new Parking(2.00);
+        double total = parking.calculateCost(hours);
+        System.out.printf("Parking charged: $%.2f%n", total);
     }
 
     private static Customer askCustomer() {
